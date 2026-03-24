@@ -71,6 +71,15 @@
       flex-direction: column;
       height: 100%;
     }
+
+    .leaflet-control-layers {
+      background: #1a1a2e !important;
+      border: 1px solid #2a2a4a !important;
+      color: #e0e6f0 !important;
+      border-radius: 8px !important;
+    }
+    .leaflet-control-layers label { color: #e0e6f0; }
+    .leaflet-control-layers-separator { border-top-color: #2a2a4a !important; }
   </style>
 </head>
 <body>
@@ -113,18 +122,40 @@
       attributionControl: true,
     }).setView([defaultLat, defaultLng], defaultZoom);
 
-    // OpenStreetMap base layer
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Base layers
+    var osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
       attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
+    });
+
+    var bathymetryLayer = L.tileLayer.wms('https://www.gebco.net/data_and_products/gebco_web_services/web_map_service/mapserv?', {
+      layers: 'GEBCO_LATEST',
+      format: 'image/png',
+      transparent: false,
+      attribution: '&copy; GEBCO',
+      maxZoom: 18
+    });
 
     // OpenSeaMap nautical chart overlay
-    L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+    var seamarkLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
       maxZoom: 18,
       opacity: 1,
       attribution: '&copy; OpenSeaMap'
-    }).addTo(map);
+    });
+
+    // Add default layers
+    osmLayer.addTo(map);
+    seamarkLayer.addTo(map);
+
+    // Layer control
+    var baseLayers = {
+      'Street Map': osmLayer,
+      'Bathymetry': bathymetryLayer
+    };
+    var overlays = {
+      'Sea Marks': seamarkLayer
+    };
+    L.control.layers(baseLayers, overlays, { position: 'topright' }).addTo(map);
 
     // GPS position marker
     var gpsCircle = L.circleMarker([defaultLat, defaultLng], {
