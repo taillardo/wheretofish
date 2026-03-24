@@ -130,14 +130,22 @@
 
     var bathymetryLayer = L.layerGroup([
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 16,
+        maxZoom: 13,
         attribution: '&copy; Esri, GEBCO, NOAA'
       }),
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 16,
+        maxZoom: 13,
         attribution: ''
       })
     ]);
+
+    var gebcoLayer = L.tileLayer.wms('https://wms.gebco.net/mapserv?', {
+      layers: 'GEBCO_LATEST',
+      format: 'image/png',
+      transparent: false,
+      attribution: '&copy; GEBCO',
+      maxZoom: 18
+    });
 
     // OpenSeaMap nautical chart overlay
     var seamarkLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
@@ -153,7 +161,8 @@
     // Layer control
     var baseLayers = {
       'Street Map': osmLayer,
-      'Bathymetry': bathymetryLayer
+      'Ocean (Esri)': bathymetryLayer,
+      'Bathymetry (GEBCO)': gebcoLayer
     };
     var overlays = {
       'Sea Marks': seamarkLayer
