@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>WhereToFish</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a2e; overflow: hidden; }
+
+    #header {
+      background: #1a1a2e;
+      padding: 10px 16px 6px;
+      border-bottom: 1px solid #2a2a4a;
+      position: relative;
+      z-index: 1000;
+    }
+    #header h1 { color: #e0e6f0; font-size: 20px; font-weight: 700; margin: 0; }
+    #header p { color: #6e7891; font-size: 12px; font-weight: 500; margin: 0; }
+
+    #map { width: 100%; flex: 1; }
+
+    #info-panel {
+      background: #1a1a2e;
+      padding: 8px 12px;
+      border-top: 1px solid #2a2a4a;
+      display: flex;
+      justify-content: space-around;
+      position: relative;
+      z-index: 1000;
+    }
+    .info-cell { text-align: center; flex: 1; }
+    .info-label { color: #6e7891; font-size: 10px; font-weight: 600; letter-spacing: 1px; }
+    .info-value { color: #e0e6f0; font-size: 14px; font-weight: 600; font-family: monospace; margin-top: 2px; }
+
+    #center-btn {
+      position: fixed;
+      bottom: 60px;
+      right: 16px;
+      width: 48px;
+      height: 48px;
+      border-radius: 24px;
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      color: #2196F3;
+      font-size: 24px;
+      cursor: pointer;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    #error-banner {
+      background: #cc3333;
+      padding: 8px;
+      text-align: center;
+      color: #fff;
+      font-size: 12px;
+      display: none;
+      z-index: 1000;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="header">
+      <h1>WhereToFish</h1>
+      <p>Marine Navigation</p>
+    </div>
+    <div id="error-banner"></div>
+    <div id="map"></div>
+    <div id="info-panel">
+      <div class="info-cell">
+        <div class="info-label">LAT</div>
+        <div class="info-value" id="lat-val">--</div>
+      </div>
+      <div class="info-cell">
+        <div class="info-label">LON</div>
+        <div class="info-value" id="lon-val">--</div>
+      </div>
+      <div class="info-cell">
+        <div class="info-label">SPD</div>
+        <div class="info-value" id="spd-val">-- kn</div>
+      </div>
+      <div class="info-cell">
+        <div class="info-label">HDG</div>
+        <div class="info-value" id="hdg-val">---°</div>
+      </div>
+    </div>
+  </div>
+  <button id="center-btn">◎</button>
+
+  <script>
+    // Default: San Francisco Bay
+    var defaultLat = 37.8083;
+    var defaultLng = -122.4156;
+    var defaultZoom = 13;
+
+    var map = L.map('map', {
+      zoomControl: false,
+      attributionControl: true,
+    }).setView([defaultLat, defaultLng], defaultZoom);
+
+    // OpenStreetMap base layer
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    // OpenSeaMap nautical chart overlay
+    L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      opacity: 1,
+      attribution: '&copy; OpenSeaMap'
+    }).addTo(map);
+
+    // GPS position marker
+    var gpsCircle = L.circleMarker([defaultLat, defaultLng], {
+      radius: 8,
+      color: '#ffffff',
+      weight: 3,
+      fillColor: '#2196F3',
+      fillOpacity: 1
+    });
+
+    // Accuracy circle
+    var accuracyCircle = L.circle([defaultLat, defaultLng], {
+      radius: 50,
+      color: '#2196F3',
+      fillColor: '#2196F3',
+      fillOpacity: 0.1,
+      weight: 1
+    });
+
+    // Heading indicator
+    var headingMarker = null;
+    function createHeadingIcon(heading) {
+      return L.divIcon({
+        className: '',
+        html: '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:18px solid #1565C0;transform:rotate(' + heading + 'deg);transform-origin:center center;"></div>',
+        iconSize: [12, 18],
+        iconAnchor: [6, 9]
+      });
+    }
+
+    var followMode = true;
+    var hasPosition = false;
+    var centerBtn = document.getElementById('center-btn');
+    var errorBanner = document.getElementById('error-banner');
+
+    map.on('dragstart', function() {
+      followMode = false;
+      centerBtn.style.display = 'flex';
+    });
+
+    centerBtn.addEventListener('click', function() {
+      followMode = true;
+      centerBtn.style.display = 'none';
+      if (hasPosition) {
+        map.setView(gpsCircle.getLatLng(), Math.max(map.getZoom(), 14), { animate: true });
+      }
+    });
+
+    // Format coordinates
+    function formatCoord(value, posLabel, negLabel) {
+      if (value == null) return '--';
+      var abs = Math.abs(value);
+      var deg = Math.floor(abs);
+      var min = ((abs - deg) * 60).toFixed(3);
+      var dir = value >= 0 ? posLabel : negLabel;
+      return deg + '\u00B0' + min + "'" + dir;
+    }
+
+    function formatSpeed(mps) {
+      if (mps == null || mps < 0) return '-- kn';
+      var knots = mps * 1.94384;
+      return knots.toFixed(1) + ' kn';
+    }
+
+    function formatHeading(deg) {
+      if (deg == null || deg < 0) return '---\u00B0';
+      return Math.round(deg) + '\u00B0';
+    }
+
+    function updateInfoPanel(lat, lng, speed, heading) {
+      document.getElementById('lat-val').textContent = formatCoord(lat, 'N', 'S');
+      document.getElementById('lon-val').textContent = formatCoord(lng, 'E', 'W');
+      document.getElementById('spd-val').textContent = formatSpeed(speed);
+      document.getElementById('hdg-val').textContent = formatHeading(heading);
+    }
+
+    // GPS tracking
+    if ('geolocation' in navigator) {
+      navigator.geolocation.watchPosition(
+        function(pos) {
+          var lat = pos.coords.latitude;
+          var lng = pos.coords.longitude;
+          var accuracy = pos.coords.accuracy;
+          var speed = pos.coords.speed;
+          var heading = pos.coords.heading;
+          var latlng = [lat, lng];
+
+          if (!hasPosition) {
+            hasPosition = true;
+            gpsCircle.addTo(map);
+            accuracyCircle.addTo(map);
+            map.setView(latlng, 14);
+          }
+
+          gpsCircle.setLatLng(latlng);
+
+          if (accuracy) {
+            accuracyCircle.setLatLng(latlng);
+            accuracyCircle.setRadius(accuracy);
+          }
+
+          if (heading != null && heading >= 0) {
+            if (headingMarker) {
+              headingMarker.setLatLng(latlng);
+              headingMarker.setIcon(createHeadingIcon(heading));
+            } else {
+              headingMarker = L.marker(latlng, { icon: createHeadingIcon(heading) }).addTo(map);
+            }
+          }
+
+          if (followMode) {
+            map.setView(latlng, map.getZoom(), { animate: true });
+          }
+
+          updateInfoPanel(lat, lng, speed, heading);
+
+          // Hide error if it was showing
+          errorBanner.style.display = 'none';
+        },
+        function(err) {
+          errorBanner.textContent = 'Location error: ' + err.message;
+          errorBanner.style.display = 'block';
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 1000,
+          timeout: 10000
+        }
+      );
+    } else {
+      errorBanner.textContent = 'Geolocation is not supported by this browser.';
+      errorBanner.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
