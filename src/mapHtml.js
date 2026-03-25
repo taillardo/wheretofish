@@ -19,16 +19,23 @@ export default function getMapHtml(lat, lng, zoom) {
       attributionControl: true,
     }).setView([${lat}, ${lng}], ${zoom});
 
-    // OpenStreetMap base layer
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '&copy; OpenStreetMap'
+    // Esri marine base with bathymetry tint
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 13,
+      attribution: 'Tiles &copy; Esri &mdash; GEBCO, NOAA, National Geographic, DeLorme, HERE'
     }).addTo(map);
 
-    // OpenSeaMap nautical chart overlay
+    // Esri reference labels for ocean names and depth annotations
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 13,
+      opacity: 0.95,
+      attribution: 'Labels &copy; Esri'
+    }).addTo(map);
+
+    // OpenSeaMap seamarks on top for buoys/charts symbols
     L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
       maxZoom: 18,
-      opacity: 1,
+      opacity: 0.9,
       attribution: '&copy; OpenSeaMap'
     }).addTo(map);
 
