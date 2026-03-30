@@ -1,0 +1,28 @@
+name: Deploy WMS Proxy Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'worker/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: worker
+          secrets: |
+            CHARTWORLD_USERNAME
+            CHARTWORLD_PASSWORD
+        env:
+          CHARTWORLD_USERNAME: ${{ secrets.CHARTWORLD_USERNAME }}
+          CHARTWORLD_PASSWORD: ${{ secrets.CHARTWORLD_PASSWORD }}
