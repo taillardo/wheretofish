@@ -32,9 +32,7 @@ yarn-error.*
 
 # local env files
 .env*.local
-
-# WMS credentials
-src/wmsConfig.js
+.env
 
 # typescript
 *.tsbuildinfo

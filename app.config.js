@@ -1,0 +1,47 @@
+export default {
+  expo: {
+    name: 'WhereToFish',
+    slug: 'wheretofish',
+    version: '1.0.0',
+    orientation: 'portrait',
+    icon: './assets/icon.png',
+    userInterfaceStyle: 'dark',
+    splash: {
+      image: './assets/splash-icon.png',
+      resizeMode: 'contain',
+      backgroundColor: '#1a1a2e',
+    },
+    ios: {
+      supportsTablet: true,
+      infoPlist: {
+        NSLocationWhenInUseUsageDescription:
+          'WhereToFish needs your location to show your position on the marine navigation chart.',
+        NSLocationAlwaysAndWhenInUseUsageDescription:
+          'WhereToFish needs your location to show your position on the marine navigation chart.',
+      },
+    },
+    android: {
+      adaptiveIcon: {
+        foregroundImage: './assets/adaptive-icon.png',
+        backgroundColor: '#1a1a2e',
+      },
+      permissions: ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION'],
+    },
+    web: {
+      favicon: './assets/favicon.png',
+    },
+    plugins: [
+      [
+        'expo-location',
+        {
+          locationAlwaysAndWhenInUsePermission:
+            'WhereToFish needs your location to show your position on the marine navigation chart.',
+        },
+      ],
+    ],
+    extra: {
+      chartworldUsername: process.env.CHARTWORLD_USERNAME || '',
+      chartworldPassword: process.env.CHARTWORLD_PASSWORD || '',
+    },
+  },
+};
