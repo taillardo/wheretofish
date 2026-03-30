@@ -1,0 +1,10 @@
+name = "wheretofish-wms-proxy"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+[vars]
+WMS_BASE_URL = "https://wms-syroco.chartworld.com/"
+
+# Secrets (set via: wrangler secret put CHARTWORLD_USERNAME, etc.)
+# CHARTWORLD_USERNAME
+# CHARTWORLD_PASSWORD

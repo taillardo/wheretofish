@@ -1,14 +1,5 @@
 export default function getMapHtml(lat, lng, zoom, wmsConfig) {
-  // Build WMS URL with auth if needed
-  let wmsUrl = wmsConfig.baseUrl;
-  let extraParams = '';
-  if (wmsConfig.auth.method === 'basic') {
-    // Inject credentials into URL
-    const urlObj = new URL(wmsUrl);
-    wmsUrl = `${urlObj.protocol}//${wmsConfig.auth.username}:${wmsConfig.auth.password}@${urlObj.host}${urlObj.pathname}`;
-  } else if (wmsConfig.auth.method === 'apikey') {
-    extraParams = `&${wmsConfig.auth.paramName}=${wmsConfig.auth.key}`;
-  }
+  const wmsUrl = wmsConfig.baseUrl;
 
   return `
 <!DOCTYPE html>
@@ -76,7 +67,6 @@ export default function getMapHtml(lat, lng, zoom, wmsConfig) {
   <div id="map"></div>
   <script>
     var wmsUrl = ${JSON.stringify(wmsUrl)};
-    var extraParams = ${JSON.stringify(extraParams)};
     var wmsVersion = ${JSON.stringify(wmsConfig.version)};
     var wmsSrs = ${JSON.stringify(wmsConfig.srs)};
     var wmsFormat = ${JSON.stringify(wmsConfig.format)};
@@ -118,7 +108,7 @@ export default function getMapHtml(lat, lng, zoom, wmsConfig) {
       if (options) {
         for (var k in options) params[k] = options[k];
       }
-      return L.tileLayer.wms(wmsUrl + '?' + extraParams.replace(/^&/, ''), params);
+      return L.tileLayer.wms(wmsUrl, params);
     }
 
     // Full ENC chart (opaque base)
@@ -227,8 +217,7 @@ export default function getMapHtml(lat, lng, zoom, wmsConfig) {
         '&X=' + Math.round(point.x) +
         '&Y=' + Math.round(point.y) +
         '&INFO_FORMAT=text/html' +
-        '&FEATURE_COUNT=10' +
-        extraParams;
+        '&FEATURE_COUNT=10';
 
       var popup = L.popup({ maxWidth: 300, maxHeight: 250 })
         .setLatLng(e.latlng)

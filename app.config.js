@@ -39,9 +39,5 @@ export default {
         },
       ],
     ],
-    extra: {
-      chartworldUsername: process.env.CHARTWORLD_USERNAME || '',
-      chartworldPassword: process.env.CHARTWORLD_PASSWORD || '',
-    },
   },
 };

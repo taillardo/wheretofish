@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "name": "wheretofish-wms-proxy",
+  "version": "1.0.0",
+  "main": "src/index.js"
+}
