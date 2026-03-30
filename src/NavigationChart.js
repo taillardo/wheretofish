@@ -2,6 +2,7 @@ import React, { useRef, useCallback } from 'react';
 import { StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 import getMapHtml from './mapHtml';
+import WMS_CONFIG from './wmsConfig';
 
 export default function NavigationChart({ location, heading, initialRegion, onFollowModeChange }) {
   const webViewRef = useRef(null);
@@ -54,7 +55,8 @@ export default function NavigationChart({ location, heading, initialRegion, onFo
   const html = getMapHtml(
     initialRegion.latitude,
     initialRegion.longitude,
-    initialRegion.zoom || 13
+    initialRegion.zoom || 13,
+    WMS_CONFIG
   );
 
   return (
